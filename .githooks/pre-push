@@ -8,9 +8,18 @@ go test -race ./... || {
 
 echo "Running go mod tidy check..."
 go mod tidy
-git diff --exit-code go.mod go.sum || {
-  echo "go.mod or go.sum needs tidying"
-  exit 1
-}
+
+# Check if go.sum exists, if so check both files, otherwise just go.mod
+if [ -f go.sum ]; then
+  git diff --exit-code go.mod go.sum || {
+    echo "go.mod or go.sum needs tidying"
+    exit 1
+  }
+else
+  git diff --exit-code go.mod || {
+    echo "go.mod needs tidying"
+    exit 1
+  }
+fi
 
 echo "✓ Ready to push"

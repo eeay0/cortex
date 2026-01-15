@@ -10,10 +10,14 @@ unformatted=$(gofmt -l .)
 }
 
 echo "Running go vet..."
-go vet ./... || {
-  echo "go vet failed"
-  exit 1
-}
+if ls internal/*/*.go >/dev/null 2>&1 || ls cmd/*/*.go >/dev/null 2>&1; then
+  go vet ./... || {
+    echo "go vet failed"
+    exit 1
+  }
+else
+  echo "Skipping go vet: no Go packages found"
+fi
 
 echo "Running golangci-lint..."
 golangci-lint run || {
