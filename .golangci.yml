@@ -453,7 +453,10 @@ linters:
           - dupl
           - errcheck
           - funlen
+          - gocognit
           - goconst
+          - gocyclo
           - gosec
+          - nestif
           - noctx
           - wrapcheck
