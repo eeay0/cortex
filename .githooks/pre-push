@@ -1,0 +1,16 @@
+#!/bin/sh
+
+echo "Running full test suite with race detector..."
+go test -race ./... || {
+  echo "Tests failed with race detector"
+  exit 1
+}
+
+echo "Running go mod tidy check..."
+go mod tidy
+git diff --exit-code go.mod go.sum || {
+  echo "go.mod or go.sum needs tidying"
+  exit 1
+}
+
+echo "✓ Ready to push"

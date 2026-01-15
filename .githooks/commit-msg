@@ -1,0 +1,35 @@
+#!/bin/sh
+
+MSG="$(head -n 1 "$1")"
+
+# check for multiple consecutive spaces
+echo "$MSG" | grep -q '  ' && {
+  echo "Commit message contains multiple consecutive spaces"
+  exit 1
+}
+
+# allowed types
+TYPES="feat|fix|chore|docs|test|refactor|ci|build|style|perf"
+
+echo "$MSG" | grep -Eq "^($TYPES)(\([a-z0-9-]+\))?: .+" || {
+  echo "Invalid commit message format."
+  echo "Expected: type(scope): subject"
+  echo "Types: $TYPES"
+  exit 1
+}
+
+# Check first letter is lowercase
+echo "$MSG" | grep -Eq "^($TYPES)(\([a-z0-9-]+\))?: [a-z]" || {
+  echo "Subject must start with lowercase letter"
+  exit 1
+}
+
+SUBJECT="$(echo "$MSG" | sed 's/^[^:]*: //')"
+
+# max 72 chars
+[ "${#SUBJECT}" -le 72 ] || {
+  echo "Subject too long (max 72 chars, current: ${#SUBJECT})"
+  exit 1
+}
+
+echo "✓ Commit message valid"

@@ -1,0 +1,69 @@
+#!/bin/sh
+
+# Automatically prepend branch name to commit message if not already present
+# Example: feature/user-auth -> "feat(user-auth): "
+
+COMMIT_MSG_FILE=$1
+COMMIT_SOURCE=$2
+
+# Skip if message is from merge, squash, or already has a message
+[ "$COMMIT_SOURCE" = "merge" ] || [ "$COMMIT_SOURCE" = "squash" ] && exit 0
+
+# Get current branch name
+BRANCH_NAME=$(git symbolic-ref --short HEAD 2>/dev/null)
+
+# Skip if not on a branch or on main/master
+[ -z "$BRANCH_NAME" ] || [ "$BRANCH_NAME" = "main" ] || [ "$BRANCH_NAME" = "master" ] && exit 0
+
+# Extract type and scope from branch name patterns:
+# feat/user-auth -> feat(user-auth):
+# fix/api-bug -> fix(api-bug):
+# feature/login -> feat(login):
+
+case "$BRANCH_NAME" in
+  feat/*|feature/*)
+    TYPE="feat"
+    SCOPE=$(echo "$BRANCH_NAME" | sed 's|^feat/||;s|^feature/||')
+    ;;
+  fix/*|bugfix/*)
+    TYPE="fix"
+    SCOPE=$(echo "$BRANCH_NAME" | sed 's|^fix/||;s|^bugfix/||')
+    ;;
+  chore/*)
+    TYPE="chore"
+    SCOPE=$(echo "$BRANCH_NAME" | sed 's|^chore/||')
+    ;;
+  docs/*)
+    TYPE="docs"
+    SCOPE=$(echo "$BRANCH_NAME" | sed 's|^docs/||')
+    ;;
+  refactor/*)
+    TYPE="refactor"
+    SCOPE=$(echo "$BRANCH_NAME" | sed 's|^refactor/||')
+    ;;
+  test/*)
+    TYPE="test"
+    SCOPE=$(echo "$BRANCH_NAME" | sed 's|^test/||')
+    ;;
+  perf/*)
+    TYPE="perf"
+    SCOPE=$(echo "$BRANCH_NAME" | sed 's|^perf/||')
+    ;;
+  style/*)
+    TYPE="style"
+    SCOPE=$(echo "$BRANCH_NAME" | sed 's|^style/||')
+    ;;
+  *)
+    # No recognized pattern, exit without modification
+    exit 0
+    ;;
+esac
+
+# Read existing message
+EXISTING_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# Skip if message already has conventional commit format
+echo "$EXISTING_MSG" | grep -Eq "^(feat|fix|chore|docs|test|refactor|ci|build|style|perf)(\([a-z0-9-]+\))?: " && exit 0
+
+# Prepend type and scope to message
+echo "$TYPE($SCOPE): $EXISTING_MSG" > "$COMMIT_MSG_FILE"
